@@ -304,7 +304,7 @@ module.exports = function (RED: NodeRedApp) {
                 if (!dataListeners[slavePdoId]) dataListeners[slavePdoId] = {counter: 1};
                 else dataListeners[slavePdoId].counter++;
 
-                console.log(slavePdoId, dataListeners);
+                if (isDev) console.log(slavePdoId, dataListeners);
 
                 ecatMaster.on("__DATA__" + slavePdoId, deviceData);
             } catch (e) {
