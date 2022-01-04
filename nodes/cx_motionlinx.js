@@ -30,11 +30,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const tools_1 = require("./tools");
 const path = __importStar(require("path"));
+const fs = __importStar(require("fs"));
 const isDev = !!process.env["DEV"];
 const configPath = isDev ?
-    path.resolve(__dirname + "../tests/slaves.json") : process.cwd() + '/slaves.json';
+    path.resolve(__dirname + "/../tests/slaves.json") : process.cwd() + '/slaves.json';
 module.exports = function (RED) {
     let doesEtherCatExist = false;
+    let currentMasterState = "";
     try {
         require.resolve("etherlab-nodejs");
         doesEtherCatExist = true;
@@ -42,10 +44,16 @@ module.exports = function (RED) {
     catch (e) {
         console.log("NO 'etherlab-nodejs' module, using fake one.");
     }
+    if (!fs.existsSync(configPath)) {
+        const message = "NO 'slaves.json' file found in the Node-RED project directory." +
+            "Create the json file and restart Node-RED.";
+        currentMasterState = message;
+        console.log(message);
+        doesEtherCatExist = false;
+    }
     const __etherlab = doesEtherCatExist ? require('etherlab-nodejs') : tools_1.Tools.fakeEthercat();
     const frequency_Hz = 5000;
     const ecatMaster = new __etherlab(configPath, frequency_Hz);
-    let currentMasterState = "";
     const dataListeners = {};
     ecatMaster.on('state', setMasterState);
     ecatMaster.on("data", onData);

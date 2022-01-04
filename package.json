@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-cx-motionlinx",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A Node-RED module to write and read to MotionLinx-Ai.",
   "keywords": [
     "node-red",
@@ -14,7 +14,7 @@
     }
   },
   "optionalDependencies": {
-    "etherlab-nodejs": "0.0.2"
+    "etherlab-nodejs": "0.1.1"
   },
   "devDependencies": {
     "@types/node-red": "^1.1.1"

@@ -1,10 +1,11 @@
 import {Node, NodeRedApp} from "node-red";
 import {Tools} from "./tools";
 import * as path from "path";
+import * as fs from "fs";
 
 const isDev = !!process.env["DEV"];
 const configPath = isDev ?
-    path.resolve(__dirname + "../tests/slaves.json") : process.cwd() + '/slaves.json';
+    path.resolve(__dirname + "/../tests/slaves.json") : process.cwd() + '/slaves.json';
 
 
 interface IMotionLinxValue {
@@ -39,6 +40,8 @@ interface IDeviceStatusConfig {
 module.exports = function (RED: NodeRedApp) {
 
     let doesEtherCatExist = false;
+    let currentMasterState: string | number = "";
+
     try {
         require.resolve("etherlab-nodejs");
         doesEtherCatExist = true;
@@ -46,11 +49,18 @@ module.exports = function (RED: NodeRedApp) {
         console.log("NO 'etherlab-nodejs' module, using fake one.");
     }
 
+    if (!fs.existsSync(configPath)) {
+        const message = "NO 'slaves.json' file found in the Node-RED project directory." +
+            "Create the json file and restart Node-RED."
+        currentMasterState = message;
+        console.log(message);
+        doesEtherCatExist = false;
+    }
+
     const __etherlab = doesEtherCatExist ? require('etherlab-nodejs') : Tools.fakeEthercat();
     const frequency_Hz = 5000;
 
     const ecatMaster = new __etherlab(configPath, frequency_Hz);
-    let currentMasterState: string | number = "";
     const dataListeners: {[slavePdoId: string]: IPdoListener } = {};
 
 
