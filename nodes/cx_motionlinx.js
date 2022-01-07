@@ -101,10 +101,10 @@ module.exports = function (RED) {
             config.slaveQty = 0;
             node.warn(`EtherCAT Master will be disabled due to Slaves set to ${config.slaveQty}.`);
         }
-        const isValidFrequency = Number.isInteger(config.frequencyHz) && config.frequencyHz >= 1000;
+        const isValidFrequency = Number.isInteger(config.frequencyHz) && config.frequencyHz >= 100;
         const frequency_Hz = isValidFrequency ? config.frequencyHz : DEFAULT_FREQUENCY_HZ;
         if (!isValidFrequency) {
-            node.warn(`Frequency must be 1000Hz or higher. Using ${frequency_Hz} Hz.`);
+            node.warn(`Frequency must be 100Hz or higher. Using ${frequency_Hz} Hz.`);
         }
         masterNodeId = node.id;
         if (ecatMaster || !config.slaveQty)
