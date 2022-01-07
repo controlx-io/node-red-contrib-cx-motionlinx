@@ -202,7 +202,7 @@ module.exports = function (RED) {
                     node.status({ text: nodeStatus });
             }
             catch (e) {
-                node.warn("ERROR: " + e.message);
+                node.error("ERROR: " + e.message, msg);
             }
         });
     }
@@ -298,7 +298,7 @@ module.exports = function (RED) {
                 else
                     dataListeners[slavePdoId].counter++;
                 if (isDev)
-                    console.log(slavePdoId, dataListeners);
+                    console.log(slavePdoId, '\n', dataListeners);
                 ecatMaster.on("__DATA__" + slavePdoId, deviceData);
             }
             catch (e) {
@@ -328,7 +328,7 @@ module.exports = function (RED) {
             }
             else if (config.device === deviceType.controller) {
                 dataListeners[slavePdoId].counter--;
-                ecatMaster.removeListener('__DATA__', deviceData);
+                ecatMaster.removeListener('__DATA__' + slavePdoId, deviceData);
             }
             done();
         });

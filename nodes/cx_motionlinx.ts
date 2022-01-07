@@ -1,6 +1,5 @@
 import {Node, NodeMessage, NodeRedApp} from "node-red";
 import {motionLinxConfig, Tools} from "./tools";
-import * as path from "path";
 import * as fs from "fs";
 import {exec} from "child_process";
 
@@ -49,8 +48,6 @@ module.exports = function (RED: NodeRedApp) {
     let currentMasterState: string | number = "MASTER STOPPED";
 
     const configPath = process.cwd() + "/" + SLAVES_CONFIG_FILENAME;
-    // const configPath = isDev ?
-    //     path.resolve(__dirname + "/../tests/slaves.json") : process.cwd() + "/slaves.json";
 
     let masterNodeId = "";
 
@@ -262,7 +259,7 @@ module.exports = function (RED: NodeRedApp) {
                 const nodeStatus = handleIncomingMessage(msg);
                 if (nodeStatus) node.status({text: nodeStatus});
             } catch (e) {
-                node.warn("ERROR: " + e.message);
+                node.error("ERROR: " + e.message, msg);
             }
         });
     }
@@ -385,7 +382,7 @@ module.exports = function (RED: NodeRedApp) {
                 if (!dataListeners[slavePdoId]) dataListeners[slavePdoId] = {counter: 1};
                 else dataListeners[slavePdoId].counter++;
 
-                if (isDev) console.log(slavePdoId, dataListeners);
+                if (isDev) console.log(slavePdoId, '\n', dataListeners);
 
                 ecatMaster.on("__DATA__" + slavePdoId, deviceData);
             } catch (e) {
@@ -417,7 +414,7 @@ module.exports = function (RED: NodeRedApp) {
                 ecatMaster.removeListener('__M_STATE__', masterStatus);
             } else if (config.device === deviceType.controller) {
                 dataListeners[slavePdoId].counter--;
-                ecatMaster.removeListener('__DATA__', deviceData);
+                ecatMaster.removeListener('__DATA__' + slavePdoId, deviceData);
             }
             done();
         });
