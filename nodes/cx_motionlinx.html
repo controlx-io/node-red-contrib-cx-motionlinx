@@ -1,11 +1,62 @@
+
+<!-- ############################### CONFIG ################################# -->
+
+<script type="text/html" data-template-name="master_config">
+  <div class="form-row">
+    <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-config-input-name" placeholder="Name">
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-slaveQty"> Slaves Qty</label>
+    <input type="text" id="node-config-input-slaveQty" placeholder="eg 1">
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-frequencyHz">Frequency</label>
+    <input type="text" id="node-config-input-frequencyHz" placeholder="eg 2000">
+  </div>
+  <div class="form-tips">Frequency is in Hz. Higher value creates high CPU load.</div>
+  <br>
+  <div class="form-tips">Restart Node-RED after changing any of these parameters.
+    <code>0</code> slaves will stop the master. If master stopped, changing increasing
+    number of slaves will start Master without restart.</div>
+</script>
+
+<script type="text/html" data-help-name="master_config">
+  <pre>
+    Have to restart Node-RED after changing number of slaves.
+  </pre>
+</script>
+
+<script type="text/javascript">
+  RED.nodes.registerType("master_config", {
+    category: "config",
+    defaults: {
+      name: {value: ""},
+      slaveQty: {value: 1, required: true, validate: RED.validators.number()},
+      frequencyHz: {value: 2000, required: true, validate: RED.validators.number()},
+    },
+    label: function() {
+      return this.name || "MotionLinx Slaves:" + this.slaveQty;
+    },
+    // oneditprepare: function() {
+    //   const hz = $('#node-input-frequencyHz');
+    //   if (!hz.val()) hz.val(2000);
+    // }
+  });
+</script>
+
+
+
+
+<!-- ############################### MOTOR RUN ################################# -->
+
 <script type="text/javascript">
   RED.nodes.registerType("motionlinx_run", {
     category: "CX MotionLinx",
     color: "#e5b3fe",
     defaults: {
-      name: {
-        value: ""
-      },
+      master: {value: "", type: "master_config", required: true},
+      name: {value: ""},
     },
     inputs: 1,
     outputs: 0,
@@ -19,20 +70,25 @@
 
 <script type="text/html" data-template-name="motionlinx_run">
   <div class="form-row">
+    <label for="node-input-master"><i class="fa fa-bolt"></i> Master Config</label>
+    <input type="text" id="node-input-master" placeholder="Master Config">
+  </div>
+  <div class="form-row">
     <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
     <input type="text" id="node-input-name" placeholder="Name">
   </div>
 </script>
 
 <script type="text/html" data-help-name="motionlinx_run">
-  <p>TODO</p>
   <h3>Inputs</h3>
-  <dl class="message-properties">
-    <dt>payload<span class="property-type">object</span></dt>
-    <dd>
-      run: number, speed: number, controller: number, motor: number
-    </dd>
-  </dl>
+  <pre style="overflow-x: scroll; white-space: pre;">
+payload: {
+  run: number, // 0 stop, 1 - run\n
+  speed: number, // +/- speed setpoint, "-" to run opposite direction
+  controller: number, // index of the controller, starts from 0
+  motor: number, // Left 0 or Right 1 motor
+}
+  </pre>
 </script>
 
 
@@ -41,13 +97,14 @@
 
 
 
-
+<!-- ############################### PARAM ################################# -->
 
 <script type="text/javascript">
   RED.nodes.registerType("motionlinx_param", {
     category: "CX MotionLinx",
     color: "#e5b3fe",
     defaults: {
+      master: {value: "", type: "master_config", required: true},
       name: {value: ""},
       controller: {value: "", validate: RED.validators.number()},
     },
@@ -56,12 +113,16 @@
     icon: "link-out.png",
     paletteLabel: "Param",
     label: function() {
-      return this.name || "Set/Get Param";
+      return this.name || "Set/Get Param: " + this.controller;
     }
   });
 </script>
 
 <script type="text/html" data-template-name="motionlinx_param">
+  <div class="form-row">
+    <label for="node-input-master"><i class="fa fa-bolt"></i> Master Config</label>
+    <input type="text" id="node-input-master" placeholder="Master Config">
+  </div>
   <div class="form-row">
     <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
     <input type="text" id="node-input-name" placeholder="Name">
@@ -90,19 +151,20 @@
 
 
 
-
+<!-- ############################### STATUS ################################# -->
 
 <script type="text/javascript">
   RED.nodes.registerType("motionlinx_status", {
     category: "CX MotionLinx",
     color: "#e5b3fe",
     defaults: {
+      master: {value: "", type: "master_config", required: true},
       name: {value: ""},
       device: {value: "master", required: true},
       controller: {value: "0", validate: RED.validators.number()},
       index: {value: "0x3000"}
     },
-    inputs: 0,
+    inputs: 1,
     outputs: 1,
     icon: "link-out.png",
     paletteLabel: "Status",
@@ -124,6 +186,10 @@
 </script>
 
 <script type="text/html" data-template-name="motionlinx_status">
+  <div class="form-row">
+    <label for="node-input-master"><i class="fa fa-bolt"></i> Master Config</label>
+    <input type="text" id="node-input-master" placeholder="Master Config">
+  </div>
   <div class="form-row">
     <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
     <input type="text" id="node-input-name" placeholder="Name">
@@ -159,6 +225,18 @@
     <dt>payload<span class="property-type">object</span></dt>
     <dd>
       method: set | get; param: number, value: number, controller: number
+    </dd>
+  </dl>
+  <dl class="message-properties">
+    <dt>payload<span class="property-type">string</span></dt>
+    <dd>
+      Command:<br>
+       - slaves<br>
+       - domain
+    </dd>
+    <dt>topic<span class="property-type">string</span></dt>
+    <dd>
+      __ethercat_status__
     </dd>
   </dl>
 </script>
